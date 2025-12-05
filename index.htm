@@ -284,7 +284,7 @@
         function playSectionAnimation(section) {const textSpans = section.querySelectorAll('.reveal-text > *');if(textSpans.length) {gsap.to(textSpans, { y: "0%", duration: 1, ease: "power4.out", stagger: 0.1, overwrite: true });}const opacities = section.querySelectorAll('.reveal-opacity');if(opacities.length) {gsap.to(opacities, { opacity: 1, y: 0, duration: 1, delay: 0.2, stagger: 0.1, ease: "power2.out", overwrite: true });}const skills = section.querySelectorAll('.skill-bar-fill');if(skills.length) {skills.forEach(bar => {gsap.to(bar, { width: bar.getAttribute('data-width'), duration: 1.5, ease: "power2.out", delay: 0.5 });});}const works = section.querySelectorAll('.work-card');if(works.length) {gsap.fromTo(works, { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.8, stagger: 0.1, ease: "power2.out", overwrite: true });}}
 
         // 🟢 修改這裡：請填入第二個檔案的路徑 (例如 'mbti.htm' 或你的線上網址)
-        const MBTI_URL = 'https://github.com/march2077/resume/mbti.htm'; 
+        const MBTI_URL = 'mbti.htm'; 
 
         function openMbti() {
             const iframe = document.getElementById('mbti-iframe');
