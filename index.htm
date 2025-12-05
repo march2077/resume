@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LIN YU-LONG | Interactive Portfolio</title>
     
-    <!-- 預先載入第一張輪播圖 (提升首屏速度) -->
-    <link rel="preload" as="image" href="https://i.postimg.cc/xdqH1wRk/generated-image-4k-01.jpg">
+    <!-- 🟢 改為相對路徑：預先載入第一張輪播圖 -->
+    <link rel="preload" as="image" href="images/hero-01.jpg">
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
@@ -65,10 +65,10 @@
             <div class="hero-slider-container hover-trigger">
                 <div class="swiper mySwiper">
                     <div class="swiper-wrapper">
-                        <!-- 只有第一張圖不延遲載入 (Eager Load) -->
-                        <div class="swiper-slide"><img src="https://i.postimg.cc/xdqH1wRk/generated-image-4k-01.jpg" alt="Art 1"></div>
-                        <div class="swiper-slide"><img src="https://i.postimg.cc/ZRtRz2Dt/generated-image-4k-02.jpg" alt="Art 2" loading="lazy"></div>
-                        <div class="swiper-slide"><img src="https://i.postimg.cc/W339jYDD/generated-image-4k-03.jpg" alt="Art 3" loading="lazy"></div>
+                        <!-- 🟢 改為相對路徑：Hero 輪播 -->
+                        <div class="swiper-slide"><img src="images/hero-01.jpg" alt="Art 1"></div>
+                        <div class="swiper-slide"><img src="images/hero-02.jpg" alt="Art 2" loading="lazy"></div>
+                        <div class="swiper-slide"><img src="images/hero-03.jpg" alt="Art 3" loading="lazy"></div>
                     </div>
                 </div>
             </div>
@@ -205,9 +205,9 @@
                 </div>
                 
                 <div class="works-grid">
-                    <!-- 作品圖片加上 loading="lazy" 以加速網頁讀取 -->
+                    <!-- 🟢 改為相對路徑：作品集圖片 -->
                     <div class="work-card featured hover-trigger" onclick="openMbti()" style="cursor: pointer;">
-                        <img src="https://i.postimg.cc/Qx0bKSDr/cover.jpg" alt="Westie MBTI Test" loading="lazy">
+                        <img src="images/work-mbti.jpg" alt="Westie MBTI Test" loading="lazy">
                         <div class="work-info">
                             <span style="font-size: 1.2rem; font-weight: bold; color: var(--accent-color);">Interactive Web App</span>
                             <span>NaNa 西高地白梗 MBTI 測驗</span>
@@ -216,27 +216,27 @@
                     </div>
 
                     <a href="https://store.line.me/stickershop/product/29077785/zh-Hant" target="_blank" class="work-card hover-trigger">
-                        <img src="https://stickershop.line-scdn.net/stickershop/v1/product/29077785/LINEStorePC/main.png?v=1" alt="Sticker" loading="lazy">
+                        <img src="images/sticker-01.png" alt="Sticker" loading="lazy">
                         <div class="work-info">LINE Sticker <br> View</div>
                     </a>
                     <a href="https://store.line.me/stickershop/product/26653079/zh-Hant" target="_blank" class="work-card hover-trigger">
-                        <img src="https://stickershop.line-scdn.net/stickershop/v1/product/26653079/LINEStorePC/main.png?v=1" alt="Sticker" loading="lazy">
+                        <img src="images/sticker-02.png" alt="Sticker" loading="lazy">
                         <div class="work-info">LINE Sticker <br> View</div>
                     </a>
                     <a href="https://store.line.me/stickershop/product/26030738/zh-Hant" target="_blank" class="work-card hover-trigger">
-                        <img src="https://stickershop.line-scdn.net/stickershop/v1/product/26030738/LINEStorePC/main.png?v=1" alt="Sticker" loading="lazy">
+                        <img src="images/sticker-03.png" alt="Sticker" loading="lazy">
                         <div class="work-info">LINE Sticker <br> View</div>
                     </a>
                     <a href="https://store.line.me/stickershop/product/26397765/zh-Hant" target="_blank" class="work-card hover-trigger">
-                        <img src="https://stickershop.line-scdn.net/stickershop/v1/product/26397765/LINEStorePC/main.png?v=1" alt="Sticker" loading="lazy">
+                        <img src="images/sticker-04.png" alt="Sticker" loading="lazy">
                         <div class="work-info">LINE Sticker <br> View</div>
                     </a>
                     <a href="https://store.line.me/stickershop/product/31224858/zh-Hant" target="_blank" class="work-card hover-trigger">
-                        <img src="https://stickershop.line-scdn.net/stickershop/v1/product/31224858/LINEStorePC/main.png?v=1" alt="Sticker" loading="lazy">
+                        <img src="images/sticker-05.png" alt="Sticker" loading="lazy">
                         <div class="work-info">LINE Sticker <br> View</div>
                     </a>
                     <a href="https://store.line.me/stickershop/product/25630540/zh-Hant" target="_blank" class="work-card hover-trigger">
-                        <img src="https://stickershop.line-scdn.net/stickershop/v1/product/25630540/LINEStorePC/main.png?v=1" alt="Sticker" loading="lazy">
+                        <img src="images/sticker-06.png" alt="Sticker" loading="lazy">
                         <div class="work-info">LINE Sticker <br> View</div>
                     </a>
                 </div>
@@ -283,8 +283,9 @@
         sections.forEach((section, i) => {ScrollTrigger.create({trigger: section,scroller: ".scroll-container",start: "top 60%",onEnter: () => {pageNum.textContent = section.getAttribute('data-index');playSectionAnimation(section);},onEnterBack: () => {pageNum.textContent = section.getAttribute('data-index');playSectionAnimation(section);}});});
         function playSectionAnimation(section) {const textSpans = section.querySelectorAll('.reveal-text > *');if(textSpans.length) {gsap.to(textSpans, { y: "0%", duration: 1, ease: "power4.out", stagger: 0.1, overwrite: true });}const opacities = section.querySelectorAll('.reveal-opacity');if(opacities.length) {gsap.to(opacities, { opacity: 1, y: 0, duration: 1, delay: 0.2, stagger: 0.1, ease: "power2.out", overwrite: true });}const skills = section.querySelectorAll('.skill-bar-fill');if(skills.length) {skills.forEach(bar => {gsap.to(bar, { width: bar.getAttribute('data-width'), duration: 1.5, ease: "power2.out", delay: 0.5 });});}const works = section.querySelectorAll('.work-card');if(works.length) {gsap.fromTo(works, { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.8, stagger: 0.1, ease: "power2.out", overwrite: true });}}
 
-        // 🟢 修改這裡：請填入第二個檔案的路徑 (例如 'mbti.htm' 或你的線上網址)
-        const MBTI_URL = 'mbti.htm'; 
+        // 🟢 修改這裡：使用相對路徑檔名
+        // 只要這兩個 HTML 檔在同一個資料夾，這樣寫在本地和 GitHub 都會通
+        const MBTI_URL = 'mbti.html'; 
 
         function openMbti() {
             const iframe = document.getElementById('mbti-iframe');
@@ -300,7 +301,6 @@
             document.querySelector('.cursor').style.display = 'block';
             document.body.style.cursor = 'none';
         }
-
     </script>
 </body>
 </html>
