@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧹 Code Cleaner Tool</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background-color: #1e1e1e;
+            color: #d4af37;
+            font-family: monospace;
+            height: 100vh;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+        }
+
+        h1 {
+            text-align: center;
+            margin: 0 0 20px 0;
+            color: #d4af37;
+            border-bottom: 1px solid #555;
+            padding-bottom: 10px;
+        }
+
+        .container {
+            display: flex;
+            gap: 20px;
+            flex: 1;
+            min-height: 0; /* 防止 flex item 溢出 */
+        }
+
+        .box {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: #fff;
+        }
+
+        textarea {
+            flex: 1;
+            background-color: #2d2d2d;
+            color: #f8f8f8;
+            border: 1px solid #555;
+            padding: 15px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 14px;
+            resize: none;
+            border-radius: 8px;
+            outline: none;
+        }
+
+        textarea:focus {
+            border-color: #d4af37;
+        }
+
+        .actions {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        button {
+            background: linear-gradient(135deg, #d4af37 0%, #aa8e28 100%);
+            border: none;
+            padding: 15px 25px;
+            color: #000;
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: transform 0.2s;
+        }
+
+        button:hover {
+            transform: scale(1.05);
+            background: #ffd700;
+        }
+
+        button.copy-btn {
+            background: #444;
+            color: #fff;
+            border: 1px solid #666;
+        }
+        button.copy-btn:hover {
+            background: #666;
+        }
+
+        .status {
+            text-align: center;
+            color: #888;
+            margin-top: 10px;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>🧹 HTML/JS/CSS 註釋清除工具</h1>
+
+    <div class="container">
+        <!-- 輸入區 -->
+        <div class="box">
+            <label>原始代碼 (Paste Here)</label>
+            <textarea id="inputCode" placeholder="請將 christmastree.htm 的完整代碼貼在這裡..."></textarea>
+        </div>
+
+        <!-- 按鈕區 -->
+        <div class="actions">
+            <button onclick="processCode()">➡️ 執行清理</button>
+        </div>
+
+        <!-- 輸出區 -->
+        <div class="box">
+            <label>乾淨代碼 (Clean Result)</label>
+            <textarea id="outputCode" readonly placeholder="清理後的代碼會顯示在這裡..."></textarea>
+            <button class="copy-btn" onclick="copyResult()" style="margin-top: 10px;">📋 複製到剪貼簿</button>
+        </div>
+    </div>
+    
+    <div class="status" id="statusMsg">等待輸入...</div>
+
+    <script>
+        function processCode() {
+            let code = document.getElementById('inputCode').value;
+            
+            if (!code.trim()) {
+                alert("請先貼上代碼！");
+                return;
+            }
+
+            // 1. 移除 HTML 註釋 <!-- ... -->
+            code = code.replace(/<!--[\s\S]*?-->/g, '');
+
+            // 2. 移除 CSS/JS 多行註釋 /* ... */
+            code = code.replace(/\/\*[\s\S]*?\*\//g, '');
+
+            // 3. 移除 JS 單行註釋 // ... 
+            // 為了防止誤刪網址 (如 https://)，我們使用保護機制
+            // 邏輯：如果 // 前面是冒號 : (如 http: ), 則保留，否則刪除
+            code = code.replace(/([^:]|^)\/\/.*/g, '$1');
+
+            // 4. 移除多餘的空行 (連續兩個以上的換行變成一個)
+            code = code.replace(/^\s*[\r\n]/gm, '');
+
+            document.getElementById('outputCode').value = code;
+            
+            // 計算節省行數
+            const originalLines = document.getElementById('inputCode').value.split('\n').length;
+            const newLines = code.split('\n').length;
+            document.getElementById('statusMsg').innerText = `清理完成！從 ${originalLines} 行減少到 ${newLines} 行。`;
+        }
+
+        function copyResult() {
+            const output = document.getElementById('outputCode');
+            output.select();
+            document.execCommand('copy');
+            const btn = document.querySelector('.copy-btn');
+            const originalText = btn.innerText;
+            btn.innerText = "✅ 已複製！";
+            setTimeout(() => btn.innerText = originalText, 2000);
+        }
+    </script>
+</body>
+</html>
