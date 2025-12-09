@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web TXT 智慧閱讀器</title>
+    <style>
+        /* --- CSS 變數定義 (主題核心) --- */
+        :root {
+            --bg-color: #f5f5f7;
+            --card-bg: #ffffff;
+            --text-color: #1d1d1f;
+            --highlight-bg: #fff3cd;
+            --highlight-border: #ffc107;
+            --accent-color: #0071e3;
+            --secondary-text: #86868b;
+            --border-color: #d2d2d7;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            --font-family: "PingFang TC", "Microsoft JhengHei", "Heiti TC", sans-serif;
+        }
+
+        /* 暗黑模式變數 */
+        [data-theme="dark"] {
+            --bg-color: #1c1c1e;
+            --card-bg: #2c2c2e;
+            --text-color: #e5e5e7;
+            --highlight-bg: #3a3a3c;
+            --highlight-border: #0a84ff;
+            --accent-color: #0a84ff;
+            --secondary-text: #98989d;
+            --border-color: #48484a;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        /* 養眼模式變數 */
+        [data-theme="sepia"] {
+            --bg-color: #f2eadd;
+            --card-bg: #fbf0d9;
+            --text-color: #5b4636;
+            --highlight-bg: #e6dbbf;
+            --highlight-border: #8c6b4a;
+            --accent-color: #b07d46;
+            --secondary-text: #8f7863;
+            --border-color: #dccbb1;
+            --shadow: 0 4px 12px rgba(91, 70, 54, 0.1);
+        }
+
+        body {
+            font-family: var(--font-family);
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            transition: background-color 0.3s, color 0.3s;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* --- 頂部工具列 --- */
+        header {
+            background-color: var(--card-bg);
+            padding: 10px 20px;
+            box-shadow: 0 1px 5px rgba(0,0,0,0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            z-index: 100;
+        }
+
+        h1 { margin: 0; font-size: 1.2rem; color: var(--accent-color); }
+
+        .toolbar-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        /* --- 設定面板 (可摺疊) --- */
+        #settings-panel {
+            background-color: var(--card-bg);
+            border-bottom: 1px solid var(--border-color);
+            padding: 15px 20px;
+            display: none; /* 預設隱藏 */
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        #settings-panel.show { display: grid; }
+
+        .setting-item { display: flex; flex-direction: column; gap: 5px; }
+        .setting-item label { font-size: 0.85rem; color: var(--secondary-text); font-weight: bold;}
+        
+        /* --- 主要內容區 --- */
+        main {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        #reader-container {
+            width: 100%;
+            max-width: 800px;
+            background-color: var(--card-bg);
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            min-height: 50vh;
+            transition: all 0.3s;
+        }
+
+        /* --- 文字段落樣式 --- */
+        p.text-segment {
+            margin: 0 0 1em 0;
+            line-height: 1.8;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        p.text-segment:hover {
+            background-color: rgba(0,0,0,0.05);
+        }
+        p.active {
+            background-color: var(--highlight-bg);
+            box-shadow: inset 4px 0 0 var(--highlight-border);
+            font-weight: bold;
+        }
+
+        /* --- 底部控制列 --- */
+        footer {
+            background-color: var(--card-bg);
+            border-top: 1px solid var(--border-color);
+            padding: 10px 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            z-index: 100;
+        }
+
+        /* --- UI 元件樣式 --- */
+        button, select, input[type="file"] {
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-color);
+            color: var(--text-color);
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+        button:hover { filter: brightness(0.95); }
+        button.primary { background-color: var(--accent-color); color: white; border: none; }
+        button.primary:hover { filter: brightness(1.1); }
+        button.icon-btn { padding: 6px 10px; font-size: 1.1rem; }
+        
+        input[type="range"] {
+            width: 100%;
+            accent-color: var(--accent-color);
+        }
+
+        .status-toast {
+            position: fixed;
+            bottom: 70px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+        .status-toast.show { opacity: 1; }
+
+        /* 檔案資訊顯示 */
+        #file-info { font-size: 0.8rem; color: var(--secondary-text); margin-right: 10px;}
+        
+        /* 隱藏原生 file input，改用按鈕觸發 */
+        #fileInput { display: none; }
+
+        @media (max-width: 600px) {
+            #reader-container { padding: 20px; }
+            .toolbar-group { width: 100%; justify-content: space-between; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- 頂部導航 -->
+<header>
+    <div class="toolbar-group">
+        <h1>📚 TXT Reader</h1>
+        <span id="file-info">未載入檔案</span>
+    </div>
+    <div class="toolbar-group">
+        <button onclick="document.getElementById('fileInput').click()">📂 開啟檔案</button>
+        <input type="file" id="fileInput" accept=".txt">
+        <button class="icon-btn" onclick="toggleSettings()" title="設定">⚙️</button>
+    </div>
+</header>
+
+<!-- 設定面板 -->
+<div id="settings-panel">
+    <div class="setting-item">
+        <label>🎨 主題模式</label>
+        <select id="themeSelect" onchange="changeTheme(this.value)">
+            <option value="system">隨系統</option>
+            <option value="light">☀️ 明亮模式</option>
+            <option value="sepia">📜 養眼模式</option>
+            <option value="dark">🌑 暗黑模式</option>
+        </select>
+    </div>
+    
+    <div class="setting-item">
+        <label>🔠 檔案編碼 (亂碼請切換)</label>
+        <select id="encodingSelect" onchange="reloadFileWithEncoding()">
+            <option value="utf-8">UTF-8 (通用)</option>
+            <option value="big5">Big5 (繁體中文)</option>
+            <option value="gbk">GBK (簡體中文)</option>
+        </select>
+    </div>
+
+    <div class="setting-item">
+        <label>🗣️ 朗讀聲音</label>
+        <select id="voiceSelect"><option>載入中...</option></select>
+    </div>
+
+    <div class="setting-item">
+        <label>🐇 語速: <span id="rateValue">1.0</span>x</label>
+        <input type="range" id="rateRange" min="0.5" max="2" step="0.1" value="1" oninput="updateRate(this.value)">
+    </div>
+
+    <div class="setting-item">
+        <label>🔍 字體大小: <span id="sizeValue">18</span>px</label>
+        <input type="range" id="sizeRange" min="12" max="36" step="1" value="18" oninput="updateFontSize(this.value)">
+    </div>
+</div>
+
+<!-- 主要閱讀區 -->
+<main>
+    <div id="reader-container">
+        <div style="text-align:center; color: var(--secondary-text); margin-top: 50px;">
+            <p>👋 歡迎使用</p>
+            <p>請點擊右上角「開啟檔案」載入 TXT 小說</p>
+        </div>
+    </div>
+</main>
+
+<!-- 狀態提示 -->
+<div id="toast" class="status-toast">狀態訊息</div>
+
+<!-- 底部控制 -->
+<footer id="footerControls" style="display:none;">
+    <button onclick="changePage(-1)">⏮ 上一頁</button>
+    <span id="pageIndicator" style="font-size: 0.9rem; font-weight: bold;">0 / 0</span>
+    <button onclick="changePage(1)">下一頁 ⏭</button>
+    
+    <div style="width: 20px;"></div> <!-- Spacer -->
+    
+    <button id="btnPlay" class="primary icon-btn" onclick="togglePlay()" title="播放/暫停">▶</button>
+    <button class="icon-btn" onclick="stopReading()" title="停止">⏹</button>
+</footer>
+
+<script>
+    // --- 狀態管理 ---
+    const state = {
+        file: null,          // 當前檔案物件
+        textSegments: [],    // 切割後的文字陣列
+        currentPage: 1,      // 當前頁碼
+        itemsPerPage: 50,    // 每頁段落數
+        isReading: false,    // 是否正在朗讀
+        isPaused: false,     // 是否暫停中
+        readingIndex: -1,    // 全域朗讀索引
+        voices: [],          // 語音列表
+        
+        // 使用者偏好 (會存入 localStorage)
+        prefs: {
+            theme: 'system',
+            encoding: 'utf-8',
+            voiceName: '',
+            rate: 1.0,
+            fontSize: 18
+        }
+    };
+
+    const synth = window.speechSynthesis;
+    let currentUtterance = null;
+
+    // --- 初始化 ---
+    window.onload = function() {
+        loadPreferences();
+        applyPreferences();
+        populateVoices();
+        
+        // 監聽系統主題變化
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+            if(state.prefs.theme === 'system') applyTheme('system');
+        });
+    };
+
+    // --- 檔案處理 ---
+    document.getElementById('fileInput').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        state.file = file;
+        document.getElementById('file-info').textContent = file.name;
+        readFile(file);
+    });
+
+    function readFile(file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            processText(e.target.result);
+            checkReadProgress(file.name, file.size); // 檢查是否有閱讀紀錄
+        };
+        reader.onerror = () => showToast("檔案讀取失敗");
+        reader.readAsText(file, state.prefs.encoding);
+    }
+
+    function reloadFileWithEncoding() {
+        if (!state.file) return;
+        state.prefs.encoding = document.getElementById('encodingSelect').value;
+        savePreferences();
+        readFile(state.file);
+        showToast(`已切換編碼為: ${state.prefs.encoding}`);
+    }
+
+    function processText(text) {
+        // 切割文字，保留非空行
+        state.textSegments = text.split(/\r\n|\n/).filter(line => line.trim() !== '');
+        
+        if (state.textSegments.length === 0) {
+            showToast("檔案內容為空");
+            return;
+        }
+
+        // 重置狀態
+        state.currentPage = 1;
+        state.readingIndex = -1;
+        stopReading();
+        
+        document.getElementById('footerControls').style.display = 'flex';
+        renderPage();
+        showToast(`載入成功，共 ${state.textSegments.length} 段`);
+    }
+
+    // --- 渲染與分頁 ---
+    function renderPage() {
+        const container = document.getElementById('reader-container');
+        container.innerHTML = ''; // 清空
+        
+        const startIdx = (state.currentPage - 1) * state.itemsPerPage;
+        const endIdx = Math.min(startIdx + state.itemsPerPage, state.textSegments.length);
+
+        for (let i = startIdx; i < endIdx; i++) {
+            const p = document.createElement('p');
+            p.className = 'text-segment';
+            p.textContent = state.textSegments[i];
+            p.onclick = () => playSegment(i);
+            
+            // 恢復高亮
+            if (i === state.readingIndex) {
+                p.classList.add('active');
+            }
+            container.appendChild(p);
+        }
+        
+        // 更新頁碼顯示
+        const totalPages = Math.ceil(state.textSegments.length / state.itemsPerPage);
+        document.getElementById('pageIndicator').textContent = `${state.currentPage} / ${totalPages}`;
+        
+        // 頁面滾動到頂部
+        document.querySelector('main').scrollTop = 0;
+    }
+
+    function changePage(delta) {
+        const totalPages = Math.ceil(state.textSegments.length / state.itemsPerPage);
+        const newPage = state.currentPage + delta;
+        if (newPage >= 1 && newPage <= totalPages) {
+            state.currentPage = newPage;
+            renderPage();
+        }
+    }
+
+    // --- 語音朗讀核心 ---
+    function populateVoices() {
+        state.voices = synth.getVoices();
+        const select = document.getElementById('voiceSelect');
+        select.innerHTML = '';
+        
+        // 排序：中文優先
+        state.voices.sort((a, b) => {
+            const zhA = a.lang.includes('zh') ? 1 : 0;
+            const zhB = b.lang.includes('zh') ? 1 : 0;
+            return zhB - zhA;
+        });
+
+        state.voices.forEach(v => {
+            const opt = document.createElement('option');
+            opt.textContent = `${v.name} (${v.lang})`;
+            opt.value = v.name;
+            select.appendChild(opt);
+        });
+
+        // 選中儲存的語音
+        if(state.prefs.voiceName) {
+            select.value = state.prefs.voiceName;
+        } else {
+            // 預設選取第一個中文
+            const defaultZh = state.voices.find(v => v.lang.includes('zh-TW')) || state.voices.find(v => v.lang.includes('zh'));
+            if(defaultZh) select.value = defaultZh.name;
+        }
+        
+        // 綁定變更事件
+        select.onchange = (e) => {
+            state.prefs.voiceName = e.target.value;
+            savePreferences();
+        };
+    }
+    if (speechSynthesis.onvoiceschanged !== undefined) {
+        speechSynthesis.onvoiceschanged = populateVoices;
+    }
+
+    function togglePlay() {
+        if (state.isReading && !state.isPaused) {
+            // 暫停
+            synth.pause();
+            state.isPaused = true;
+            updatePlayBtnIcon('⏸'); // 顯示繼續
+            showToast("已暫停");
+        } else if (state.isReading && state.isPaused) {
+            // 繼續
+            synth.resume();
+            state.isPaused = false;
+            updatePlayBtnIcon('▶'); // 顯示播放中(其實暫停按鈕應該是 ||)
+            // 修正：這裡邏輯是 "按鈕顯示現在狀態" 還是 "按鈕顯示動作"？
+            // 通常：播放中顯示「暫停鈕」，暫停中顯示「播放鈕」。
+            updatePlayBtnIcon('⏸'); 
+        } else {
+            // 從頭或當前頁開始
+            const startIdx = (state.currentPage - 1) * state.itemsPerPage;
+            playSegment(startIdx);
+        }
+    }
+
+    function updatePlayBtnIcon(icon) {
+        // 簡單切換，實作上：
+        // 播放中 -> 按鈕顯示 || (Pause)
+        // 暫停中/停止 -> 按鈕顯示 ▶ (Play)
+        const btn = document.getElementById('btnPlay');
+        if (state.isReading && !state.isPaused) {
+             btn.textContent = '⏸'; 
+             btn.title = "暫停";
+        } else {
+             btn.textContent = '▶';
+             btn.title = "播放";
+        }
+    }
+
+    function playSegment(index) {
+        synth.cancel();
+        
+        if (index >= state.textSegments.length) {
+            stopReading();
+            showToast("朗讀結束");
+            return;
+        }
+
+        // 自動翻頁邏輯
+        const pageOfSegment = Math.floor(index / state.itemsPerPage) + 1;
+        if (pageOfSegment !== state.currentPage) {
+            state.currentPage = pageOfSegment;
+            renderPage();
+        }
+
+        state.readingIndex = index;
+        highlightActive();
+        saveReadProgress(); // 儲存進度
+
+        const text = state.textSegments[index];
+        const utterance = new SpeechSynthesisUtterance(text);
+        
+        // 設定語音參數
+        const voiceName = document.getElementById('voiceSelect').value;
+        const voice = state.voices.find(v => v.name === voiceName);
+        if (voice) utterance.voice = voice;
+        utterance.rate = state.prefs.rate;
+
+        utterance.onend = () => {
+            if (state.isReading) {
+                playSegment(index + 1);
+            }
+        };
+        
+        utterance.onerror = (e) => {
+            console.error(e);
+            if (state.isReading) setTimeout(() => playSegment(index + 1), 200);
+        };
+
+        state.isReading = true;
+        state.isPaused = false;
+        updatePlayBtnIcon();
+        synth.speak(utterance);
+    }
+
+    function stopReading() {
+        state.isReading = false;
+        state.isPaused = false;
+        synth.cancel();
+        updatePlayBtnIcon();
+        // 移除高亮但不重置 index，方便使用者知道讀到哪
+        // document.querySelectorAll('.active').forEach(el => el.classList.remove('active'));
+    }
+
+    function highlightActive() {
+        // 移除舊高亮
+        document.querySelectorAll('.active').forEach(el => el.classList.remove('active'));
+        
+        // 計算當前頁面內的相對索引
+        const startIdx = (state.currentPage - 1) * state.itemsPerPage;
+        const localIdx = state.readingIndex - startIdx;
+        
+        const paragraphs = document.querySelectorAll('#reader-container p');
+        if (paragraphs[localIdx]) {
+            paragraphs[localIdx].classList.add('active');
+            paragraphs[localIdx].scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }
+
+    // --- 偏好設定與介面操作 ---
+    function toggleSettings() {
+        const panel = document.getElementById('settings-panel');
+        panel.classList.toggle('show');
+    }
+
+    function changeTheme(theme) {
+        state.prefs.theme = theme;
+        applyTheme(theme);
+        savePreferences();
+    }
+
+    function applyTheme(theme) {
+        const body = document.body;
+        body.removeAttribute('data-theme');
+        
+        if (theme === 'system') {
+            if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                body.setAttribute('data-theme', 'dark');
+            }
+        } else {
+            body.setAttribute('data-theme', theme);
+        }
+        
+        // 同步選單
+        document.getElementById('themeSelect').value = theme;
+    }
+
+    function updateFontSize(val) {
+        state.prefs.fontSize = val;
+        document.getElementById('sizeValue').textContent = val;
+        document.getElementById('reader-container').style.fontSize = val + 'px';
+        savePreferences();
+    }
+
+    function updateRate(val) {
+        state.prefs.rate = val;
+        document.getElementById('rateValue').textContent = val;
+        savePreferences();
+        // 如果正在讀，需要重啟才能生效（WebSpeech API 限制），這裡簡單處理：
+        if(state.isReading) {
+            playSegment(state.readingIndex);
+        }
+    }
+
+    // --- LocalStorage 記憶功能 ---
+    function savePreferences() {
+        localStorage.setItem('reader_prefs', JSON.stringify(state.prefs));
+    }
+
+    function loadPreferences() {
+        const saved = localStorage.getItem('reader_prefs');
+        if (saved) {
+            const p = JSON.parse(saved);
+            state.prefs = { ...state.prefs, ...p };
+        }
+    }
+
+    function applyPreferences() {
+        // 應用主題
+        applyTheme(state.prefs.theme);
+        // 應用編碼
+        document.getElementById('encodingSelect').value = state.prefs.encoding;
+        // 應用字體
+        document.getElementById('sizeRange').value = state.prefs.fontSize;
+        updateFontSize(state.prefs.fontSize);
+        // 應用語速
+        document.getElementById('rateRange').value = state.prefs.rate;
+        document.getElementById('rateValue').textContent = state.prefs.rate;
+    }
+
+    // 閱讀進度 (Key: 檔名+檔案大小)
+    function getFileKey(name, size) {
+        return `progress_${name}_${size}`;
+    }
+
+    function saveReadProgress() {
+        if (!state.file) return;
+        const key = getFileKey(state.file.name, state.file.size);
+        const data = {
+            page: state.currentPage,
+            index: state.readingIndex,
+            timestamp: new Date().getTime()
+        };
+        localStorage.setItem(key, JSON.stringify(data));
+    }
+
+    function checkReadProgress(name, size) {
+        const key = getFileKey(name, size);
+        const saved = localStorage.getItem(key);
+        if (saved) {
+            const data = JSON.parse(saved);
+            // 顯示簡單的 Confirm (或 Toast 帶按鈕)
+            if (confirm(`發現上次閱讀紀錄 (第 ${data.page} 頁)，是否跳轉？`)) {
+                state.currentPage = data.page;
+                renderPage();
+                // 稍微延遲以確保 DOM 渲染完畢
+                setTimeout(() => {
+                    state.readingIndex = data.index;
+                    highlightActive();
+                }, 100);
+            }
+        }
+    }
+
+    // --- 輔助 UI ---
+    function showToast(msg) {
+        const t = document.getElementById('toast');
+        t.textContent = msg;
+        t.classList.add('show');
+        setTimeout(() => t.classList.remove('show'), 3000);
+    }
+
+// --- 鍵盤快速鍵支援 (PC 體驗最佳化) ---
+    document.addEventListener('keydown', function(e) {
+        // 如果正在設定面板裡打字，不要觸發
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+
+        switch(e.code) {
+            case 'Space':
+                e.preventDefault(); // 防止網頁捲動
+                togglePlay();
+                break;
+            case 'ArrowRight':
+                e.preventDefault();
+                changePage(1);
+                break;
+            case 'ArrowLeft':
+                e.preventDefault();
+                changePage(-1);
+                break;
+            // 額外贈送：上下鍵可以調整音量或語速，這裡先保留給段落跳轉
+            case 'ArrowDown':
+                e.preventDefault();
+                if(state.isReading) playSegment(state.readingIndex + 1);
+                break;
+            case 'ArrowUp':
+                e.preventDefault();
+                if(state.isReading && state.readingIndex > 0) playSegment(state.readingIndex - 1);
+                break;
+        }
+    });
+</script>
+
+</body>
+</html>
